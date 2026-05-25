@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonne Fête Papa – Canadiens</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Anton', sans-serif;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* ===================== ENVELOPE SCREEN ===================== */
+  #envelope-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    transition: opacity 0.5s ease;
+  }
+
+  #envelope-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .envelope-wrap {
+    position: relative;
+    width: 280px;
+    height: 200px;
+    cursor: pointer;
+    filter: drop-shadow(0 0 40px rgba(200,16,46,0.5));
+  }
+
+  /* Envelope body */
+  .env-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: #c8102e;
+    border-radius: 4px 4px 8px 8px;
+  }
+
+  /* Envelope inner shadow lines */
+  .env-body::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 100%;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,0.15) 50%, transparent 50%),
+      linear-gradient(225deg, rgba(0,0,0,0.15) 50%, transparent 50%);
+    border-radius: 4px 4px 8px 8px;
+  }
+
+  /* Envelope flap (top triangle) */
+  .env-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 110px;
+    z-index: 10;
+    transform-origin: top center;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .env-flap svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .env-flap.open {
+    transform: rotateX(180deg);
+  }
+
+  /* Envelope letter peek */
+  .env-letter {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 0;
+    background: #fff;
+    border-radius: 3px;
+    z-index: 5;
+    transition: height 0.6s 0.4s ease, bottom 0.6s 0.4s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .env-letter.peek {
+    height: 120px;
+    bottom: 60px;
+  }
+
+  .env-letter-text {
+    font-family: 'Anton', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: #c8102e;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.4s 0.8s ease;
+  }
+
+  .env-letter.peek .env-letter-text {
+    opacity: 1;
+  }
+
+  /* Open button */
+  .open-btn {
+    background: none;
+    border: 2px solid #c8102e;
+    color: #fff;
+    font-family: 'Anton', sans-serif;
+    font-size: 16px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    padding: 16px 48px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: color 0.3s ease;
+  }
+
+  .open-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #c8102e;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  .open-btn:hover::before { transform: translateX(0); }
+  .open-btn:hover { color: #fff; }
+
+  .open-btn:active { transform: scale(0.97); }
+
+  .envelope-label {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3px;
+  }
+
+  /* ===================== CARD SCREEN ===================== */
+  #card-screen {
+    display: none;
+    opacity: 0;
+    width: 100%;
+    max-width: 680px;
+    transform: scale(0.92) translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  #card-screen.show {
+    display: flex;
+    justify-content: center;
+  }
+
+  #card-screen.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* ===================== THE CARD ===================== */
+  .card {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background: #1a0005;
+    border: 3px solid #c8102e;
+    box-shadow: 0 0 80px rgba(200,16,46,0.4), 0 0 200px rgba(200,16,46,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px 40px 50px;
+    gap: 32px;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .top-band, .bottom-band {
+    position: absolute;
+    left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #c8102e, #fff, #c8102e);
+    z-index: 20;
+  }
+  .top-band { top: 0; }
+  .bottom-band { bottom: 0; }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob-1 { width: 300px; height: 300px; background: rgba(200,16,46,0.25); top: -80px; right: -60px; }
+  .blob-2 { width: 250px; height: 250px; background: rgba(200,16,46,0.15); bottom: -60px; left: -40px; }
+
+  .sparkles { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .sparkle {
+    position: absolute;
+    opacity: 0.5;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.3); }
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .headline { text-align: center; animation: fadeUp 0.9s ease both; }
+  .headline-sub {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    letter-spacing: 6px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .headline-main {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(52px, 10vw, 80px);
+    line-height: 0.9;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 40px rgba(200,16,46,0.6);
+  }
+
+  .divider {
+    width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeUp 0.9s 0.2s ease both;
+  }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #c8102e); }
+  .divider-line:last-child { background: linear-gradient(90deg, #c8102e, transparent); }
+  .divider-diamond { width: 8px; height: 8px; background: #c8102e; transform: rotate(45deg); flex-shrink: 0; }
+
+  .ticket-area { width: 100%; animation: fadeUp 0.9s 0.35s ease both; }
+  .ticket {
+    width: 100%;
+    background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(200,16,46,0.3);
+    position: relative;
+  }
+  .ticket::after {
+    content: '';
+    position: absolute;
+    left: 90px; top: 0; bottom: 0;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, #ddd 0, #ddd 6px, transparent 6px, transparent 12px);
+  }
+  .ticket-left {
+    width: 90px;
+    background: #c8102e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 8px;
+    flex-shrink: 0;
+  }
+  .ticket-left-text {
+    color: #fff;
+    font-family: 'Anton', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-transform: uppercase;
+  }
+  .ticket-right { flex: 1; padding: 24px; }
+  .ticket-team { font-family: 'Anton', sans-serif; font-size: 10px; letter-spacing: 4px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+  .ticket-matchup {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(18px, 4vw, 26px);
+    color: #1a0005;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 18px;
+  }
+  .ticket-matchup .vs { font-size: 14px; color: #c8102e; margin: 0 6px; }
+  .ticket-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+  }
+  .ticket-detail-label { font-family: 'Playfair Display', serif; font-style: italic; font-size: 10px; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 3px; }
+  .ticket-detail-value { font-family: 'Anton', sans-serif; font-size: 15px; color: #1a0005; letter-spacing: 1px; }
+
+  .message { text-align: center; animation: fadeUp 0.9s 0.5s ease both; }
+  .message-quote {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(17px, 3.5vw, 22px);
+    color: rgba(255,255,255,0.85);
+    line-height: 1.7;
+  }
+  .message-quote em { color: #c8102e; font-style: normal; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ENVELOPE SCREEN -->
+<div id="envelope-screen">
+  <div class="envelope-label">Tu as reçu une carte 🎁</div>
+
+  <div class="envelope-wrap" onclick="openEnvelope()">
+    <div class="env-body"></div>
+    <div class="env-letter" id="envLetter">
+      <div class="env-letter-text">Bonne Fête Papa</div>
+    </div>
+    <div class="env-flap" id="envFlap">
+      <svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="0,0 280,0 280,10 140,105 0,10" fill="#a00c24"/>
+        <polygon points="0,0 140,90 280,0" fill="#c8102e"/>
+      </svg>
+    </div>
+  </div>
+
+  <button class="open-btn" onclick="openEnvelope()">Ouvrir</button>
+</div>
+
+<!-- CARD SCREEN -->
+<div id="card-screen">
+  <div class="card">
+    <div class="top-band"></div>
+    <div class="bottom-band"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="sparkles">
+      <div class="sparkle" style="top:12%;left:8%;font-size:10px;animation-delay:0s">✦</div>
+      <div class="sparkle" style="top:18%;right:10%;font-size:6px;animation-delay:0.8s;color:#c8102e">✦</div>
+      <div class="sparkle" style="top:55%;left:5%;font-size:8px;animation-delay:1.5s">✦</div>
+      <div class="sparkle" style="top:70%;right:7%;font-size:7px;animation-delay:0.4s;color:#c8102e">✦</div>
+      <div class="sparkle" style="bottom:15%;left:12%;font-size:9px;animation-delay:2s">✦</div>
+    </div>
+
+    <div class="content">
+      <div class="headline">
+        <div class="headline-sub">Bonne fête</div>
+        <div class="headline-main">Papa</div>
+      </div>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-diamond"></div>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="ticket-area">
+        <div class="ticket">
+          <div class="ticket-left">
+            <div class="ticket-left-text">Centre Bell · Montréal</div>
+          </div>
+          <div class="ticket-right">
+            <div class="ticket-team">Ligue Nationale de Hockey</div>
+            <div class="ticket-matchup">
+              Canadiens <span class="vs">VS</span> Hurricanes
+            </div>
+            <div class="ticket-details">
+              <div>
+                <div class="ticket-detail-label">Date</div>
+                <div class="ticket-detail-value">27 MAI 2026</div>
+              </div>
+              <div>
+                <div class="ticket-detail-label">Heure</div>
+                <div class="ticket-detail-value">20h00</div>
+              </div>
+              <div>
+                <div class="ticket-detail-label">Lieu</div>
+                <div class="ticket-detail-value">Centre Bell</div>
+              </div>
+              <div>
+                <div class="ticket-detail-label">Billets</div>
+                <div class="ticket-detail-value">2 places</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message">
+        <div class="message-quote">
+          Pour ton anniversaire,<br>
+          on t'offre une soirée au Centre Bell<br>
+          pour <em>Go Habs Go !</em>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let opened = false;
+
+  function openEnvelope() {
+    if (opened) return;
+    opened = true;
+
+    // Animate flap open + letter peek
+    document.getElementById('envFlap').classList.add('open');
+    document.getElementById('envLetter').classList.add('peek');
+
+    // Launch confetti
+    launchConfetti();
+
+    // After short delay, fade out envelope and show card
+    setTimeout(() => {
+      document.getElementById('envelope-screen').classList.add('hide');
+
+      setTimeout(() => {
+        document.getElementById('envelope-screen').style.display = 'none';
+        const cardScreen = document.getElementById('card-screen');
+        cardScreen.classList.add('show');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            cardScreen.classList.add('visible');
+          });
+        });
+      }, 500);
+    }, 900);
+  }
+
+  function launchConfetti() {
+    const colors = ['#c8102e', '#ffffff', '#003da5', '#ff6b6b', '#ffd700'];
+    for (let i = 0; i < 60; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.width = (Math.random() * 10 + 6) + 'px';
+        el.style.height = (Math.random() * 10 + 6) + 'px';
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }, i * 20);
+    }
+  }
+</script>
+</body>
+</html>
